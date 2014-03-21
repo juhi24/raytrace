@@ -2,7 +2,10 @@
 """
 @author: Jussi Tiira
 """
+import random as rnd
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class Particle:
     def __init__(self,refractive_index):
@@ -63,15 +66,17 @@ class Ray:
     def intersection_point(self,distance):
         return self.o + distance*self.d
 
-def reflect(ray,surf,point):
-    return
-
-def refract(ray,surf,point):
-    return
-
 def main():
-    sph = Sphere(4)
-    ray = Ray(np.array([1,2,-5]), np.array([0,0,1]))
+    sph = Sphere(10)
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection='3d')
+    for x in range(200):
+        ray = Ray(np.array([rnd.uniform(-10,10),rnd.uniform(-10,10),-15]), np.array([0,0,1]))
+        pnt = ray.intersection_point(sph.intersection_distance(ray))
+        plot_point(ax,pnt)
 
 if __name__ == '__main__':
     main()
+
+def plot_point(ax, p):
+    ax.scatter(p[0],p[1],p[2])
