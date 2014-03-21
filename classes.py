@@ -4,11 +4,17 @@
 """
 import numpy as np
 
-class Sphere:
+class Particle:
+    def __init__(self,refractive_index):
+        self.ind = refractive_index
+    
+    def intersection_distance(self,ray): pass
+
+class Sphere(Particle):
     def __init__(self, radius, center=np.array([0,0,0]), refractive_index=1.333):
+        Particle.__init__(self,refractive_index)
         self.r = radius
         self.c = center
-        self.ind = refractive_index
     
     def intersection_distance(self,ray):
         a = np.dot(ray.d, ray.d)
