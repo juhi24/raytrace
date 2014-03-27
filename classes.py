@@ -18,6 +18,13 @@ class Sphere(Particle):
         Particle.__init__(self,refractive_index)
         self.r = radius
         self.c = center
+        
+    def normal(self,point):
+        
+        return
+        
+    def is_surface_point(self,point):
+        return True
     
     def intersection_distance(self,ray):
         a = np.dot(ray.d, ray.d)
@@ -62,6 +69,7 @@ class Ray:
     def __init__(self, origin, direction):
         self.o = origin
         self.d = direction
+        self.stokes = np.array([1,0,0,0])
     
     def intersection_point(self,distance):
         return self.o + distance*self.d
