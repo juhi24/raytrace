@@ -6,13 +6,17 @@ from sys import float_info
 import random as rnd
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import Axes3D, art3d
 
 class Particle:
     def __init__(self,refractive_index):
         self.m = refractive_index
     
     def intersection_distance(self,ray): pass
+
+    def has_point(self,point): pass
+
+    def unit_normal(self,point): pass
 
 class Sphere(Particle):
     def __init__(self, radius, center=np.array([0,0,0]), refractive_index=1.333):
@@ -21,17 +25,10 @@ class Sphere(Particle):
         self.c = center
         
     def unit_normal(self,point):
-        return Ray.unit(point-self.o)
+        return Ray.unit(point-self.c)
         
-    def reflection(self,ray,point):
-        dnsign = -1 if self.is_internal(ray) else 1
-        di = ray.d
-        dn = dnsign*self.unit_normal(point)
-        ds = 2*(np.dot(dn,di))*dn-di
-        return Ray(point,ds)
-        
-    def is_internal(self,ray):
-        d_center = np.linalg.norm(ray.o-self.c)
+    def has_point(self,point):
+        d_center = np.linalg.norm(point-self.c)
         return d_center + float_info.epsilon < self.r
     
     def intersection_distance(self,ray):
@@ -74,29 +71,67 @@ m = {
 }
 
 class Ray:
-    def __init__(self, origin, direction):
+    def __init__(self, origin, direction=np.array([0,0,1])):
         self.o = origin
         self.d = Ray.unit(direction)
         self.stokes = np.array([1,0,0,0])
+        self.l = -1
     
     @staticmethod
     def unit(vector):
         return vector/np.linalg.norm(vector)
     
-    def intersection_point(self,distance):
+    def intersection_point(self,particle):
+        distance = particle.intersection_distance(self)
+        if distance < 0:
+            return np.array([])
         return self.o + distance*self.d
         
-def plot_point(ax, p):
-    ax.scatter(p[0],p[1],p[2])
+    def intersects(self,particle):
+        return particle.intersection_distance(self) > 0
+        
+    def reflection(self, particle, point):
+        if point.size == 0:
+            return
+        dnsign = 1 if particle.has_point(self.o) else -1
+        di = -self.d
+        dn = dnsign*particle.unit_normal(point)
+        ds = 2*(np.dot(dn,di))*dn-di
+        return Ray(point,ds)
+        
+    def plot(self,ax):
+        Ray.plot_line(ax,self.o,self.endpoint())
+
+    def endpoint(self):
+        length = 10 if self.l<0 else self.l
+        return self.o + length*self.d
+    
+    def set_l(self, length):
+        self.l = length
+        
+    def plot_origin(self, ax):
+        ax.scatter(self.o[0],self.o[1],self.o[2],color='#6633ff')
+    
+    @staticmethod    
+    def plot_line(ax, p1, p2):
+        l = art3d.Line3D([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]])
+        ax.add_line(l)
 
 def main():
     sph = Sphere(10)
     fig = plt.figure()
     ax = fig.add_subplot(111,projection='3d')
     for x in range(200):
-        ray = Ray(np.array([rnd.uniform(-10,10),rnd.uniform(-10,10),-15]), np.array([0,0,1]))
-        pnt = ray.intersection_point(sph.intersection_distance(ray))
-        plot_point(ax,pnt)
+        ray = Ray(np.array([rnd.uniform(-10,10),rnd.uniform(-10,10),-15]))
+        pnt = ray.intersection_point(sph)
+        if pnt.size == 0:
+            continue
+        ray_r = ray.reflection(sph,pnt)
+        ray.plot(ax)
+        ray_r.plot(ax)
+        ray_r.plot_origin(ax)
+    plt.axis('equal')
+    plt.show()
 
 if __name__ == '__main__':
     main()
