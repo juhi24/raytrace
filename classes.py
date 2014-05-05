@@ -82,9 +82,10 @@ def main():
         ray = Ray(np.array([rnd.uniform(-10,10),rnd.uniform(-10,10),-15]), np.array([0,0,1]))
         pnt = ray.intersection_point(sph.intersection_distance(ray))
         plot_point(ax,pnt)
-
-if __name__ == '__main__':
-    main()
+        
 
 def plot_point(ax, p):
     ax.scatter(p[0],p[1],p[2])
+
+if __name__ == '__main__':
+    main()
