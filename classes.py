@@ -2,6 +2,7 @@
 """
 @author: Jussi Tiira
 """
+from sys import float_info
 import random as rnd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Particle:
     def __init__(self,refractive_index):
-        self.ind = refractive_index
+        self.m = refractive_index
     
     def intersection_distance(self,ray): pass
 
@@ -19,12 +20,19 @@ class Sphere(Particle):
         self.r = radius
         self.c = center
         
-    def normal(self,point):
+    def unit_normal(self,point):
+        return Ray.unit(point-self.o)
         
-        return
+    def reflection(self,ray,point):
+        dnsign = -1 if self.is_internal(ray) else 1
+        di = ray.d
+        dn = dnsign*self.unit_normal(point)
+        ds = 2*(np.dot(dn,di))*dn-di
+        return Ray(point,ds)
         
-    def is_surface_point(self,point):
-        return True
+    def is_internal(self,ray):
+        d_center = np.linalg.norm(ray.o-self.c)
+        return d_center + float_info.epsilon < self.r
     
     def intersection_distance(self,ray):
         a = np.dot(ray.d, ray.d)
@@ -58,7 +66,7 @@ class Sphere(Particle):
             
         return t0
         
-material = {
+m = {
 'water': 1.333,
 'ethanol': 1.36,
 'ice': 1.309,
@@ -68,11 +76,18 @@ material = {
 class Ray:
     def __init__(self, origin, direction):
         self.o = origin
-        self.d = direction
+        self.d = Ray.unit(direction)
         self.stokes = np.array([1,0,0,0])
+    
+    @staticmethod
+    def unit(vector):
+        return vector/np.linalg.norm(vector)
     
     def intersection_point(self,distance):
         return self.o + distance*self.d
+        
+def plot_point(ax, p):
+    ax.scatter(p[0],p[1],p[2])
 
 def main():
     sph = Sphere(10)
@@ -82,10 +97,6 @@ def main():
         ray = Ray(np.array([rnd.uniform(-10,10),rnd.uniform(-10,10),-15]), np.array([0,0,1]))
         pnt = ray.intersection_point(sph.intersection_distance(ray))
         plot_point(ax,pnt)
-        
-
-def plot_point(ax, p):
-    ax.scatter(p[0],p[1],p[2])
 
 if __name__ == '__main__':
     main()
