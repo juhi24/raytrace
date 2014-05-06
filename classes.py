@@ -63,6 +63,13 @@ class Sphere(Particle):
             
         return t0
         
+    def plot(self,ax):
+        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+        x=self.r*np.cos(u)*np.sin(v)
+        y=self.r*np.sin(u)*np.sin(v)
+        z=self.r*np.cos(v)
+        ax.plot_wireframe(x, y, z, color="r")
+        
 m = {
 'water': 1.333,
 'ethanol': 1.36,
@@ -97,17 +104,18 @@ class Ray:
         di = -self.d
         dn = dnsign*particle.unit_normal(point)
         ds = 2*(np.dot(dn,di))*dn-di
+        self.l = self.distance_from_origin(point)
         return Ray(point,ds)
-        
+    
+    def distance_from_origin(self,p):
+        return np.linalg.norm(p-self.o)
+    
     def plot(self,ax):
         Ray.plot_line(ax,self.o,self.endpoint())
 
     def endpoint(self):
         length = 10 if self.l<0 else self.l
         return self.o + length*self.d
-    
-    def set_l(self, length):
-        self.l = length
         
     def plot_origin(self, ax):
         ax.scatter(self.o[0],self.o[1],self.o[2],color='#6633ff')
@@ -120,8 +128,8 @@ class Ray:
 def main():
     sph = Sphere(10)
     fig = plt.figure()
-    ax = fig.add_subplot(111,projection='3d')
-    for x in range(200):
+    ax = fig.add_subplot(111, aspect='equal', projection='3d')
+    for x in range(100):
         ray = Ray(np.array([rnd.uniform(-10,10),rnd.uniform(-10,10),-15]))
         pnt = ray.intersection_point(sph)
         if pnt.size == 0:
@@ -130,7 +138,7 @@ def main():
         ray.plot(ax)
         ray_r.plot(ax)
         ray_r.plot_origin(ax)
-    plt.axis('equal')
+    sph.plot(ax)
     plt.show()
 
 if __name__ == '__main__':
