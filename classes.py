@@ -97,15 +97,22 @@ class Ray:
     def intersects(self,particle):
         return particle.intersection_distance(self) > 0
         
-    def reflection(self, particle, point):
+    def ref_ction(self, particle):
+        point = self.intersection_point(particle)
         if point.size == 0:
-            return
-        dnsign = 1 if particle.has_point(self.o) else -1
-        di = -self.d
+            return (None, None)
+        internal = particle.has_point(self.o)
+        dnsign = -1 if internal else 1
+        di = self.d
         dn = dnsign*particle.unit_normal(point)
-        ds = 2*(np.dot(dn,di))*dn-di
+        drefl = di-2*(np.dot(dn,di))*dn
+        r = particle.m if internal else 1/particle.m
+        c = np.dot(-dn,di)
+        drefr = r*di+(r*c-np.sqrt(1-r**2*(1-c**2)))*dn
+        reflection = Ray(point,drefl)
+        refraction = Ray(point,drefr)
         self.l = self.distance_from_origin(point)
-        return Ray(point,ds)
+        return (reflection,refraction)
     
     def distance_from_origin(self,p):
         return np.linalg.norm(p-self.o)
@@ -129,15 +136,19 @@ def main():
     sph = Sphere(10)
     fig = plt.figure()
     ax = fig.add_subplot(111, aspect='equal', projection='3d')
-    for x in range(100):
+    for x in range(20):
         ray = Ray(np.array([rnd.uniform(-10,10),rnd.uniform(-10,10),-15]))
-        pnt = ray.intersection_point(sph)
-        if pnt.size == 0:
+        ray_refl, ray_refr = ray.ref_ction(sph)
+        if ray_refl is None:
             continue
-        ray_r = ray.reflection(sph,pnt)
         ray.plot(ax)
-        ray_r.plot(ax)
-        ray_r.plot_origin(ax)
+        ray_refl.plot(ax)
+        ray_refr.plot(ax)
+        ray_refl.plot_origin(ax)
+        ray_refl2, ray_refr2 = ray_refr.ref_ction(sph)
+        #ray_refl2.plot_origin(ax)
+        #ray_refl2.plot(ax)
+        #ray_refr2.plot(ax)
     sph.plot(ax)
     plt.show()
 
