@@ -131,29 +131,6 @@ class Ray:
         reflection = Ray(point,drefl)
         refraction = Ray(point,drefr)
         return (reflection,refraction)
-        
-    def refadefa(self,particle):
-        point = self.intersection_point(particle)
-        if point.size == 0:
-            return (None, None)
-        ray_is_inside = particle.has_point(self.o)
-        if ray_is_inside:
-            dnsign = -1
-            r = particle.m
-        else:
-            dnsign = 1
-            r = 1/particle.m
-        di = self.d
-        dn = dnsign*particle.unit_normal(point)
-        ci = dn*np.dot(-di,dn)
-        si = ci + di
-        dr = ci + si
-        st = r*si
-        ct = -dn*np.sqrt(1-np.dot(st,st))
-        dt = ct + st
-        reflection = Ray(point,dr)
-        refraction = Ray(point,dt)
-        return (reflection,refraction)
     
     def distance_from_origin(self,p):
         return np.linalg.norm(p-self.o)
@@ -182,7 +159,7 @@ def main():
         ray_refl, ray_refr = ray.ref_ction(sph)
         if ray_refl is None:
             continue
-        ray_refl2, ray_refr2 = ray_refr.refadefa(sph)
+        ray_refl2, ray_refr2 = ray_refr.ref_ction(sph)
         ray.plot(ax)
         ray_refl.plot(ax)
         ray_refr.plot(ax)
