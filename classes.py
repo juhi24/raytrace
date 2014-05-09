@@ -202,43 +202,59 @@ class Ray:
     def plot_line(ax, p1, p2, a=1):
         l = art3d.Line3D([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]],alpha=a)
         ax.add_line(l)
-        
-def trace(ray,particle,ax=None,draw_rays=True):
-    intensity = ray.stokes[0]
-    if intensity < 1e-5 or np.isnan(intensity):
-        return
-    ray_r, ray_t = ray.ref_ction(particle)
-    if (ray_r is not None or intensity < 1) and draw_rays:
-        ray.plot(ax)
-        #ray.plot_origin(ax)
-    #print(ray)
-    if ray_r is None: # ray misses particle
-        #print('Missed!')
-        return
-    trace(ray_t,particle,ax,draw_rays)
-    trace(ray_r,particle,ax,draw_rays)
+
+class Tracer:
+    def __init__(self):
+        self.angles = np.array([])
+           
+    def trace(self,ray,particle,ax=None,draw_rays=True):
+        angle_reference = np.array([0,0,1])
+        intensity = ray.stokes[0]
+        if intensity < 1e-5 or np.isnan(intensity):
+            return
+        ray_r, ray_t = ray.ref_ction(particle)
+        if (ray_r is not None or intensity < 1) and draw_rays:
+            ray.plot(ax)
+            #ray.plot_origin(ax)
+        #print(ray)
+        if ray_r is None: # ray misses particle
+            #print('Missed!')
+            return
+        if particle.has_point(ray.o):
+            scattering_angle = Ray.angle(angle_reference,(ray_t.o-particle.c))
+            scattering_angle_d = 180*scattering_angle/np.pi
+            #print(scattering_angle_d)
+            self.angles = np.append(self.angles,scattering_angle_d)
+        self.trace(ray_t,particle,ax,draw_rays)
+        self.trace(ray_r,particle,ax,draw_rays)
     
 def particle_radius(x,wavelength):
     return 0.5*x*wavelength/np.pi
     
 def main():
-    draw3d = True
-    lam = 0.5 #um
-    x = 1000
+    draw3d = True # Enable for 3d visualization
+    lam = 0.5 # wavelength in um
+    x = 100 # size parameter
+    eps = 1 # distance of initial rays
     
+    tracer = Tracer()
     sph_r = particle_radius(x,lam)
-    sph = Sphere(sph_r)
+    sph = Sphere(sph_r, refractive_index=complex(1.333,1e-3))
     if draw3d:
         fig = plt.figure()
         ax = fig.add_subplot(111, aspect='equal', projection='3d')
         sph.plot(ax)
     else:
         ax = None
-    for x in range(500): # initial number of rays
-        ray = Ray(np.array([rnd.uniform(-sph_r,sph_r),rnd.uniform(-sph_r,sph_r),-sph_r-1]),wavelength=lam)
-        trace(ray,sph,ax,draw3d) # recursive
+    for x in range(2000): # initial number of rays
+        ray = Ray(np.array([rnd.uniform(-sph_r,sph_r),rnd.uniform(-sph_r,sph_r),-sph_r-eps]),wavelength=lam)
+        tracer.trace(ray,sph,ax,draw3d) # recursive
     if draw3d:
         plt.show()
+    # Not ready
+    #fig = plt.fiqure()
+    #plt.hist(tracer.angles,90)
+    #plt.show()
 
 if __name__ == '__main__':
     main()
